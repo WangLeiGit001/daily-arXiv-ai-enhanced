@@ -15,6 +15,102 @@ let textSearchQuery = ''; // 实时文本搜索查询
 let previousActiveKeywords = null; // 文本搜索激活时，暂存之前的关键词激活集合
 let previousActiveAuthors = null; // 文本搜索激活时，暂存之前的作者激活集合
 
+// ========== 收藏夹功能 ==========
+const FAVORITES_STORAGE_KEY = 'favoritePapers';
+
+function getFavorites() {
+  try {
+    const raw = localStorage.getItem(FAVORITES_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    console.error('读取收藏夹失败:', e);
+    return [];
+  }
+}
+
+function saveFavorites(list) {
+  try {
+    localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(list));
+    updateFavoritesCountBadge();
+  } catch (e) {
+    console.error('保存收藏夹失败:', e);
+  }
+}
+
+function isFavorite(paperId) {
+  if (!paperId) return false;
+  const list = getFavorites();
+  return list.some(p => (p.id || p.url) === paperId);
+}
+
+function addToFavorites(paper) {
+  const id = paper.id || paper.url;
+  if (!id) return;
+  const list = getFavorites();
+  if (list.some(p => (p.id || p.url) === id)) return;
+  list.unshift({
+    id: paper.id,
+    url: paper.url,
+    title: paper.title,
+    authors: paper.authors,
+    category: paper.category,
+    summary: paper.summary,
+    date: paper.date,
+    details: paper.details,
+    motivation: paper.motivation,
+    method: paper.method,
+    result: paper.result,
+    conclusion: paper.conclusion,
+    code_url: paper.code_url,
+    code_stars: paper.code_stars,
+    code_last_update: paper.code_last_update
+  });
+  saveFavorites(list);
+}
+
+function removeFromFavorites(paperId) {
+  if (!paperId) return;
+  const list = getFavorites().filter(p => (p.id || p.url) !== paperId);
+  saveFavorites(list);
+}
+
+function toggleFavorite(paper) {
+  const id = paper.id || paper.url;
+  if (!id) return;
+  if (isFavorite(id)) {
+    removeFromFavorites(id);
+  } else {
+    addToFavorites(paper);
+  }
+  updateFavoriteButton(paper);
+}
+
+function updateFavoriteButton(paper) {
+  const btn = document.getElementById('favoriteButton');
+  const iconOutline = document.getElementById('favoriteIconOutline');
+  const iconFilled = document.getElementById('favoriteIconFilled');
+  const textSpan = document.getElementById('favoriteButtonText');
+  if (!btn || !paper) return;
+  const id = paper.id || paper.url;
+  const favorited = isFavorite(id);
+  if (iconOutline) iconOutline.style.display = favorited ? 'none' : 'block';
+  if (iconFilled) iconFilled.style.display = favorited ? 'block' : 'none';
+  if (textSpan) textSpan.textContent = favorited ? '已收藏' : '收藏';
+  btn.title = favorited ? '取消收藏' : '收藏';
+}
+
+function updateFavoritesCountBadge() {
+  const badge = document.getElementById('favoritesCountBadge');
+  if (!badge) return;
+  const list = getFavorites();
+  if (list.length === 0) {
+    badge.style.display = 'none';
+  } else {
+    badge.textContent = list.length > 99 ? '99+' : list.length;
+    badge.style.display = 'inline-flex';
+  }
+}
+
 // 加载用户的关键词设置
 function loadUserKeywords() {
   const savedKeywords = localStorage.getItem('preferredKeywords');
@@ -211,6 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initEventListeners();
   
   fetchGitHubStats();
+  updateFavoritesCountBadge();
   
   // 加载用户关键词
   loadUserKeywords();
@@ -1366,6 +1463,17 @@ function showPaperDetails(paper, paperIndex) {
   const paperPosition = document.getElementById('paperPosition');
   if (paperPosition && currentFilteredPapers.length > 0) {
     paperPosition.textContent = `${currentPaperIndex + 1} / ${currentFilteredPapers.length}`;
+  }
+  
+  // 收藏按钮状态与点击
+  updateFavoriteButton(paper);
+  const favoriteButton = document.getElementById('favoriteButton');
+  if (favoriteButton) {
+    favoriteButton.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleFavorite(paper);
+    };
   }
   
   modal.classList.add('active');
