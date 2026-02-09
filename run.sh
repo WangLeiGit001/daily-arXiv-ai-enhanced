@@ -147,11 +147,6 @@ fi
 
 cd ..
 
-# 第五步：更新文件列表 / Step 5: Update file list
-echo "步骤5：更新文件列表... / Step 5: Updating file list..."
-ls data/*.jsonl | sed 's|data/||' > assets/file-list.txt
-echo "✅ 文件列表更新完成 / File list updated"
-
 # 完成总结 / Completion summary
 echo ""
 echo "=== 本地调试完成 / Local Debug Completed ==="
@@ -161,13 +156,11 @@ if [ "$PARTIAL_MODE" = "false" ]; then
     echo "   ✅ 去重检查 / Smart duplicate check"
     echo "   ✅ AI增强处理 / AI enhancement"
     echo "   ✅ Markdown转换 / Markdown conversion"
-    echo "   ✅ 文件列表更新 / File list update"
 else
     echo "🔄 部分流程已完成 / Partial workflow finished:"
     echo "   ✅ 数据爬取 / Data crawling"
     echo "   ✅ 去重检查 / Smart duplicate check"
     echo "   ⏭️  跳过AI增强和Markdown转换 / Skipped AI enhancement and Markdown conversion"
-    echo "   ✅ 文件列表更新 / File list update"
     echo ""
     echo "💡 提示：设置OPENAI_API_KEY可启用完整功能 / Tip: Set OPENAI_API_KEY to enable full functionality"
 fi

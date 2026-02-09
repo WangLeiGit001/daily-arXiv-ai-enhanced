@@ -143,47 +143,22 @@ function selectLanguageForDate(date, preferredLanguage = null) {
   return availableLanguages.includes('English') ? 'English' : availableLanguages[0];
 }
 
-async function fetchAvailableDates() {
-  try {
-    // 从 data 分支获取文件列表
-    const fileListUrl = DATA_CONFIG.getDataUrl('assets/file-list.txt');
-    const response = await fetch(fileListUrl);
-    if (!response.ok) {
-      console.error('Error fetching file list:', response.status);
-      return [];
-    }
-    const text = await response.text();
-    const files = text.trim().split('\n');
-
-    const dateRegex = /(\d{4}-\d{2}-\d{2})_AI_enhanced_(English|Chinese)\.jsonl/;
-    const dateLanguageMap = new Map(); // Store date -> available languages
-    const dates = [];
-    
-    files.forEach(file => {
-      const match = file.match(dateRegex);
-      if (match && match[1] && match[2]) {
-        const date = match[1];
-        const language = match[2];
-        
-        if (!dateLanguageMap.has(date)) {
-          dateLanguageMap.set(date, []);
-          dates.push(date);
-        }
-        dateLanguageMap.get(date).push(language);
-      }
-    });
-    
-    // Store the language mapping globally for later use
-    window.dateLanguageMap = dateLanguageMap;
-    availableDates = [...new Set(dates)];
-    availableDates.sort((a, b) => new Date(b) - new Date(a));
-
-    initDatePicker(); // Assuming this function uses availableDates
-
-    return availableDates;
-  } catch (error) {
-    console.error('获取可用日期失败:', error);
+function fetchAvailableDates() {
+  // 默认仅过去一年的日期，不请求 GitHub API
+  const dateLanguageMap = new Map();
+  const dates = [];
+  const today = new Date();
+  for (let i = 0; i < 365; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().slice(0, 10);
+    dates.push(dateStr);
+    dateLanguageMap.set(dateStr, ['Chinese', 'English']);
   }
+  window.dateLanguageMap = dateLanguageMap;
+  availableDates = dates;
+  initDatePicker();
+  return Promise.resolve(availableDates);
 }
 
 function initDatePicker() {
@@ -286,7 +261,7 @@ async function loadPapersByDateRange(startDate, endDate) {
     
     for (const date of validDatesInRange) {
       const selectedLanguage = selectLanguageForDate(date);
-      // 从 data 分支获取数据文件
+      // 从 main 分支获取数据文件
       const dataUrl = DATA_CONFIG.getDataUrl(`data/${date}_AI_enhanced_${selectedLanguage}.jsonl`);
       const response = await fetch(dataUrl);
       const text = await response.text();
