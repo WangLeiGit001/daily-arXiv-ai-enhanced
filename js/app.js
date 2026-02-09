@@ -16,25 +16,13 @@ let previousActiveKeywords = null; // 文本搜索激活时，暂存之前的关
 let previousActiveAuthors = null; // 文本搜索激活时，暂存之前的作者激活集合
 
 // ========== 收藏夹功能 ==========
-const FAVORITES_STORAGE_KEY = 'favoritePapers';
-
 function getFavorites() {
-  try {
-    const raw = localStorage.getItem(FAVORITES_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch (e) {
-    console.error('读取收藏夹失败:', e);
-    return [];
-  }
+  return FavoritesStore.getLocalList();
 }
 
 function saveFavorites(list) {
-  try {
-    localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(list));
-    updateFavoritesCountBadge();
-  } catch (e) {
-    console.error('保存收藏夹失败:', e);
-  }
+  FavoritesStore.saveLocalList(list);
+  updateFavoritesCountBadge();
 }
 
 function isFavorite(paperId) {
@@ -48,7 +36,7 @@ function addToFavorites(paper) {
   if (!id) return;
   const list = getFavorites();
   if (list.some(p => (p.id || p.url) === id)) return;
-  list.unshift({
+  FavoritesStore.add({
     id: paper.id,
     url: paper.url,
     title: paper.title,
@@ -65,13 +53,13 @@ function addToFavorites(paper) {
     code_stars: paper.code_stars,
     code_last_update: paper.code_last_update
   });
-  saveFavorites(list);
+  updateFavoritesCountBadge();
 }
 
 function removeFromFavorites(paperId) {
   if (!paperId) return;
-  const list = getFavorites().filter(p => (p.id || p.url) !== paperId);
-  saveFavorites(list);
+  FavoritesStore.removeById(paperId);
+  updateFavoritesCountBadge();
 }
 
 function toggleFavorite(paper) {
@@ -308,6 +296,9 @@ document.addEventListener('DOMContentLoaded', () => {
   
   fetchGitHubStats();
   updateFavoritesCountBadge();
+  FavoritesStore.syncFromApi().then(() => {
+    updateFavoritesCountBadge();
+  });
   
   // 加载用户关键词
   loadUserKeywords();
@@ -324,7 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function fetchGitHubStats() {
   try {
-    const response = await fetch('https://api.github.com/repos/dw-dengwei/daily-arXiv-ai-enhanced');
+    const response = await fetch('https://api.github.com/repos/wangleigit001/daily-arXiv-ai-enhanced');
     const data = await response.json();
     const starCount = data.stargazers_count;
     const forkCount = data.forks_count;
