@@ -622,7 +622,7 @@ function fetchAvailableDates() {
   const dateLanguageMap = new Map();
   const dates = [];
   const today = new Date();
-  for (let i = 0; i < 365; i++) {
+  for (let i = 1; i < 366; i++) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
     const dateStr = d.toISOString().slice(0, 10);
