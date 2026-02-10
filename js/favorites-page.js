@@ -135,6 +135,7 @@ function showPaperDetails(paper, paperIndex) {
   document.getElementById("paperLink").href = paper.url || "#";
   document.getElementById("pdfLink").href = (paper.url || "").replace("abs", "pdf");
   document.getElementById("htmlLink").href = (paper.url || "").replace("abs", "html");
+  document.getElementById("kimiChatLink").href = typeof buildKimiChatUrl === "function" ? buildKimiChatUrl(paper) : "#";
 
   const githubLink = document.getElementById("githubLink");
   if (paper.code_url) {
